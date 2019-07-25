@@ -1,0 +1,81 @@
+---
+title: "Fundraisng prediction"
+author: "Elaine Lwane"
+date: "7/24/2019"
+output: html_document
+---
+
+##Predicting death that will need fundraising using Logistic regression
+
+
+```{r}
+mortalityBack = mortalityBack %>% mutate(funded = ifelse(Fundraising == "Yes", yes = 1, no = ifelse(is.na(Fundraising), yes = NA, no = 0)))
+```
+```{r}
+plot(mortality$Age, jitter(mortality$funded, 0.15), xlab = "Age", ylab = "Is funded(1-Yes, 0-No)")
+```
+```{r}
+
+mortality2 = subset(mortalityBack, select = -c(1,2,3,4,6,15,31,34,36,38))
+
+mortality2[sapply(mortality2, is.character)] = lapply(mortality2[sapply(mortality2, is.character)], as.factor)
+mortality2[sapply(mortality2, is.numeric)] = lapply(mortality2[sapply(mortality2, is.numeric)], as.factor)
+#  
+#mortality2 = na.omit(mortality2)
+ mortality2$funded = as.factor(mortality2$funded)
+# 
+# mortality2 = factor(ifelse(is.na(mortality2$Age), yes = "Unspecified", no = paste(mortality2$Age)), levels = c(levels(mortality2), "Unspecified"))
+# 
+# 
+# mortality2$Age = addNA(mortality2$Age)
+# mortality2$Age = c(levels(mortality2$Age), "Unspecified")
+# mortality2 = cbind(mortality2, facna)
+
+splitMortality = sample(x = 2, size = nrow(mortality2), replace = TRUE, prob = c(0.7, 0.3))
+
+train.mortality = subset(mortality2, splitMortality == 1)
+test.mortality = subset(mortality2, splitMortality == 2)
+
+fundModel = glm(funded ~ Age, family = "binomial", data = mortality2)
+
+summary(fundModel)
+tidy(fundModel)
+
+
+```
+```{r}
+odd_ratio = exp(coef(fundModel))
+odd_ratio
+
+```
+
+```{r,eval=FALSE}
+# prediction
+
+test = expand.grid(test.mortality$Age)
+fundpredict = round(predict(fundModel,  type = "response", se.fit = FALSE))
+#fundpredict
+
+# Comparison
+mortEvaluate = as.matrix(data.frame(observed = mortality2$funded, predicted = fundpredict, stringsAsFactors = TRUE))
+mortEvaluate
+```
+
+### Confusion matrix
+
+```{r,eval=FALSE}
+mortTable = table(mortality2$Age, fundpredict, useNA = "no")
+mortTable
+```
+
+#### Accuracy
+
+
+```{reval=FALSE}
+sum(diag(mortTable))/sum(mortTable) * 100
+
+#Or 
+
+confusionMatrix(mortTable)
+```
+

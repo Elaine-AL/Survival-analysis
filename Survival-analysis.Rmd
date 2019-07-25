@@ -1,0 +1,37 @@
+---
+title: "Survival analysis"
+author: "Elaine Lwane"
+date: "7/25/2019"
+output: html_document
+---
+
+
+### Survival Analysis
+
+You will need the **_Survival_** and **_Survminer_** package.
+
+```{r}
+
+mortalityBack = mortalityBack %>% mutate(event = ifelse(is.na(mortalityBack$Burial), yes = 0, no = 1))
+mortalityBack = mortalityBack %>% mutate(censored = ifelse(is.na(mortalityBack$Burial), yes = 1, no = 0))
+
+
+summary(mortalityBack$Death_to_Burial)
+
+Surv(mortalityBack$Death_to_Burial, mortalityBack$event) [1:10]
+
+msurvival = survfit(Surv(time = mortalityBack$Death_to_Burial) ~ 1)
+summary(msurvival)
+plot(msurvival, ylab = "Survival probability", xlab = "Days")
+
+ggsurvplot(fit = survfit(Surv(time = mortalityBack$Death_to_Burial) ~ mortalityBack$Fundraising, data = mortalityBack), 
+           ylab = "Survival probability", xlab = "Days", risk.table = TRUE, palette = "rainbow", legend.labs = c("No", "Yes"), legend.title = "Fundraising"
+               )
+
+```
+
+
+
+
+It is clear that those which had NOT requested for a fundraise had the lowest survival probability, while those that had requested for a fundraise had the highest survival probability. This is logically true since most likely for those that had requested for a fundraise were still collecting funds for the burial ceremony.
+

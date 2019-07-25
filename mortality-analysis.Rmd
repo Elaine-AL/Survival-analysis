@@ -1,0 +1,224 @@
+---
+title: "EDA analysis"
+author: "Elaine Lwane"
+date: "7/23/2019"
+output: html_document
+---
+
+```{r}
+mortality = read.csv("Obituaries_Dataset.csv", header = TRUE, na.strings = c("", "NA"))
+```
+
+```{r, echo=FALSE}
+
+mortality$Name = as.character(mortality$Name )
+mortality$Announcement = as.character(mortality$Announcement)
+mortality$Death = as.character(mortality$Death)
+mortality$Burial = as.character(mortality$Burial)
+#mortality$Word_Count = as.integer(mortality$Word_Count)
+#mortality$Death_to_Announce = as.numeric(mortality$Death_to_Announce)
+#mortality$Death_to_Burial = as.numeric(mortality$Death_to_Burial)
+#mortality$Announce_to_Burial = as.numeric(mortality$Announce_to_Burial)
+#mortality$No_of_Relatives = as.numeric(mortality$No_of_Relatives)
+mortality$County_Burial = as.character(mortality$County_Burial)
+mortality$County_Death = as.character(mortality$County_Death )
+mortality$County_Morgue = as.character(mortality$County_Morgue)
+#mortality$Distance_Death = as.integer(mortality$Distance_Death)
+#mortality$Distance_Morgue = as.integer(mortality$Distance_Morgue)
+mortality$Cause_of_Death = as.character(mortality$Cause_of_Death)
+mortality$Hospital = as.character(mortality$Hospital)
+mortality$Morgue = as.character(mortality$Morgue)
+mortality$Occupation = as.character(mortality$Occupation)
+mortality$Corporate_Name = as.character(mortality$Corporate_Name)
+mortality$Residence_Name = as.character(mortality$Residence_Name)
+```
+```{r}
+#Check for data type
+#str(mortality)
+```
+
+```{r}
+# Check for missing values
+mortality %>% map_df(~sum(is.na(.)))
+```
+
+### Data processing
+
+
+```{r}
+# convert the date columns
+mortality$Announcement = parse_date_time(mortality$Announcement, orders = "%m/%d/%Y")
+mortality$Death = parse_date_time(mortality$Death, orders = "%m/%d/%Y")
+mortality$Burial = parse_date_time(mortality$Burial, orders = "%m/%d/%Y")
+
+
+```
+
+
+### Data cleaning
+
+
+```{r, echo=FALSE}
+# Replacing missing values
+
+# mortality$Announcement[is.na(mortality$Announcement)] = 0
+# mortality$Death[is.na(mortality$Death)] = 0
+# mortality$Burial[is.na(mortality$Burial)] = 0
+
+# mortality$County_Burial[is.na(mortality$County_Burial)] = "unspecified"
+#mortality$County_Death[mortality$County_Death == NA] = ""
+# mortality$County_Morgue[is.na(mortality$County_Morgue)] = "unspecified"
+# mortality$Cause_of_Death[is.na(mortality$Cause_of_Death)] = "unspecified"
+# mortality$Hospital[is.na(mortality$Hospital)] = "unspecified"
+# mortality$Morgue[is.na(mortality$Morgue)] = "unspecified"
+# mortality$Occupation[is.na(mortality$Occupation)] = "unspecified"
+# mortality$Corporate_Name[is.na(mortality$Corporate_Name)] = "unspecified"
+# mortality$Residence_Name[is.na(mortality$Residence_Name)] = "unspecified"
+# 
+# mortality$Age[is.na(mortality$Age)] = mean(mortality$Age, na.rm = TRUE)
+# mortality$Size[is.na(mortality$Size)] = mean(mortality$Size, na.rm = TRUE)
+# mortality$Word_Count[is.na(mortality$Word_Count)] = mean(mortality$Word_Count, na.rm = TRUE)
+# mortality$No_of_Children[is.na(mortality$No_of_Children)] = mean(mortality$No_of_Children, na.rm = TRUE)
+# mortality$Significant_Children[is.na(mortality$Significant_Children)] = mean(mortality$Significant_Children, na.rm = TRUE)
+# mortality$Significant_Relatives[is.na(mortality$Significant_Relatives)] = mean(mortality$Significant_Relatives, na.rm = TRUE)
+# mortality$Distance_Morgue[is.na(mortality$Distance_Morgue)] = mean(mortality$Distance_Morgue, na.rm = TRUE)
+
+mortality$Death[1105] = as.Date(parse_date_time("2017-12-02", orders = "%Y-%m-%d"))
+mortality$Death[833] = as.Date(parse_date_time("2017-05-13", orders = "%Y-%m-%d"))
+mortality$Announcement[1145] = as.Date(parse_date_time("2017-03-13", orders = "%Y-%m-%d"))
+mortality$Death[800] = as.Date(parse_date_time("2017-04-18", orders = "%Y-%m-%d"))
+mortality$Death[1000] = as.Date(parse_date_time("2017-02-06", orders = "%Y-%m-%d"))
+mortality$Death[288] = as.Date(parse_date_time("2017-04-07", orders = "%Y-%m-%d"))
+mortality$Death[687] = as.Date(parse_date_time("2017-02-06", orders = "%Y-%m-%d"))
+mortality$Death[942] = as.Date(parse_date_time(mortality$Death[942], orders = "%Y-%d-%m"))
+
+deathan = as.numeric(difftime(mortality$Announcement, mortality$Death, units = c("days")))
+mortality$Death_to_Announce = deathan
+
+deathbur = as.numeric(difftime(mortality$Burial, mortality$Death, units = c("days")))
+mortality$Death_to_Burial = deathbur
+
+annbur = as.numeric(difftime(mortality$Burial, mortality$Announcement, units = c("days")))
+mortality$Announce_to_Burial = annbur
+
+mortalityBack = mortality
+#write_xlsx(mortalityBack, "mortalityback.xlsx")
+
+
+```
+
+```{r, echo=FALSE}
+# cleaning the data
+
+mortality$Residence[mortality$Residence == "None"] = "No"
+mortality$Corporate[mortality$Corporate == "Ministry"] = ""
+mortality$Same_Morgue[mortality$Same_Morgue == "uYes"] = "Yes"
+mortality$Same_Morgue[mortality$Same_Morgue == "Nyahururu Referral Mortuary"] = "Yes"
+mortality$Morgue[1120] = "Montezuma Funeral Home"
+mortality$Same_Morgue[mortality$Same_Morgue == "Montezuma Fun eral Home"] = "Yes"
+mortality$Cause_of_Death[mortality$Cause_of_Death == "ilness"] = "illness"
+mortality$Cause_of_Death[mortality$Cause_of_Death == "Illness"] = "illness"
+mortality$Cause_of_Death[mortality$Cause_of_Death == "accident"] = "Accident"
+mortality$Distance_Morgue[436] = 0
+mortality$Distance_Death[315] = 13713
+mortality$County_Morgue[mortality$County_Morgue == "Homa bay"] = "Homabay"
+mortality$No_of_Relatives[mortality$No_of_Relatives == -42885 | mortality$No_of_Relatives == -42873 | mortality$No_of_Relatives == -42871 | mortality$No_of_Relatives == -42866 | mortality$No_of_Relatives == -42858 | mortality$No_of_Relatives == -42833 | mortality$No_of_Relatives == -42832 ] = 999999
+mortality$No_of_Relatives[mortality$No_of_Relatives == -28] = 28
+mortality$No_of_Relatives[mortality$No_of_Relatives == -21] = 21
+mortality$No_of_Relatives[mortality$No_of_Relatives == -2] = 2
+mortality$No_of_Relatives[mortality$No_of_Relatives == -1] = 1
+mortality$Burial_Week[mortality$Burial_Week == "Weeekday" | mortality$Burial_Week == "Weekeday"] = "Weekday"
+mortality$Burial_Week[mortality$Burial_Week == "weekday"] = "Weekday" 
+mortality$Burial_Week[mortality$Burial_Week == "weekend"] = "Weekend" 
+mortality$Same_Morgue[mortality$Same_Morgue == "no"] = "No"
+mortality$Same_Morgue[mortality$Same_Morgue == "YES"] = "Yes"
+
+```
+
+### EDA analysis
+
+
+```{r}
+ggplot(subset(mortality, !is.na(Burial_Day)) , aes(Burial_Day )) +
+  geom_bar(aes(fill = Burial_Day)) +
+   scale_fill_viridis_d() +
+   coord_flip()
+
+ ggplot(mortality, aes(mortality$Burial_Week)) +
+   geom_bar(aes(fill = mortality$Burial_Week)) +
+   scale_fill_manual(values = c("deeppink", "dodgerblue3"))
+
+ggplot(mortality, aes(mortality$Gender)) +
+  geom_bar(aes(fill = mortality$Gender)) +
+   scale_fill_manual(values = c("deeppink", "dodgerblue3"))
+
+ggplot(mortality, aes(mortality$Married)) +
+  geom_bar(aes(fill = mortality$Married)) +
+  scale_fill_viridis_d() +
+  labs(x = "Is married?")
+
+ ggplot(subset(mortality, !is.na(Same_Morgue)) , aes(Same_Morgue )) +
+   geom_bar(aes(fill = Same_Morgue), show.legend = FALSE) +
+   scale_fill_viridis_d() +
+   labs(x = "Is morgue same as hospital?")
+
+ggplot(subset(mortality, !is.na(Residence_Category)) , aes(Residence_Category )) +
+  geom_bar(aes(fill = Residence_Category)) +
+  scale_fill_viridis_d() +
+  labs(x = "Residence category")
+
+ 
+ ggplot(mortality, aes(mortality$Spouse_Alive)) +
+   geom_bar(aes(fill = mortality$Spouse_Alive)) +
+   scale_fill_viridis_d() +
+   labs(x = "Is spouse alive?")
+
+ ggplot(mortality, aes(mortality$Fundraising)) +
+   geom_bar(aes(fill = mortality$Fundraising)) +
+   scale_fill_viridis_d() +
+   labs(x = "fundraised?")
+
+ ggplot(mortality, aes(mortality$Age)) +
+   geom_density() +
+   labs(title = "Age distribution", x="Age")
+ 
+ ggplot(mortality, aes(mortality$No_of_Children)) +
+  geom_density(alpha = 0.4) +
+   labs(title = "No. of children distribution", x="Number of children")
+ 
+ ggplot(mortality, aes(mortality$Significant_Children)) +
+   geom_density(alpha = 0.4) +
+   labs(title = "No. of significant children distribution", x="Number of significant children")
+ 
+ ggplot(subset(mortality, !is.na(County_Death)) , aes(County_Death )) +
+   geom_bar() +
+   coord_flip() +
+  labs(title = "County where deceased passed on", x="County")
+
+ ggplot(mortality, aes(mortality$Cause_of_Death)) +
+   geom_bar(aes(fill = mortality$Cause_of_Death)) +
+   scale_fill_viridis_d() +
+   coord_flip() +
+   labs(title = "Cause of death", x="Cause")
+
+
+```
+
+```{r}
+summary(mortality$Size)
+
+hosy = mortality %>% group_by(Hospital) %>% summarise(deceased = n_distinct(Name))
+hosy = hosy[order(hosy$deceased, decreasing = TRUE), ] %>% head(10)
+hosy
+
+morg = mortality %>% group_by(Morgue) %>% summarise(deceased = n_distinct(Name))
+morg = morg[order(morg$deceased, decreasing = TRUE), ] %>% head(10)
+morg
+
+occup = mortality %>% group_by(Occupation) %>% summarise(deceased = n_distinct(Name))
+occup = occup[order(occup$deceased, decreasing = TRUE), ] %>% head(10)
+occup
+```
+
+
+
